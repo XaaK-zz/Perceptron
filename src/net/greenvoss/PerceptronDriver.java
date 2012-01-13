@@ -6,7 +6,7 @@ public class PerceptronDriver {
 		System.console().printf("Perceptron.jar <trainingData.tra> <testingData.tes> <digit>\n"+ 
 				"trainingData.tra: File path to the training data file.\n" + 
 				"testingData.tes: File path to the testing data file.\n" + 
-				"digit: single digit to use as the test basis.");
+				"digit: single digit to use as the test basis.\n");
 	}
 	
 	/**
@@ -16,8 +16,10 @@ public class PerceptronDriver {
 	 * 		2: digit to use to compare against others
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		if(args.length < 3) {
+			usage();
+			return;
+		}
 	}
 
 }

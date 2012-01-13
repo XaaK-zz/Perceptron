@@ -70,6 +70,13 @@ public class Perceptron {
 		}
 	}
 	
+	/**
+	 * Method to perform the threshold function on the inputs/weights
+	 * @return 
+	 * 		1 if the sum of the inputs * weights is > 0
+	 * 		0 if the sum of the inputs * weights is 0
+	 * 		-1 if the sum of the inputs * weights is < 0
+	 */
 	public int threshold() {
 		float total = this.getRawValue();
 		if(total > 0)
@@ -80,10 +87,13 @@ public class Perceptron {
 			return -1;
 	}
 	
+	/**
+	 * Internal method to retrieve the value of the perceptron
+	 */
 	private float getRawValue() {
 		float total = 0.0f;
 		for(int x=0;x<inputNodes.length;x++) {
-			total += (inputNodes[x] * this.getWeightValue(x));	//weights[x]
+			total += (inputNodes[x] * this.getWeightValue(x));	
 		}
 		return total;
 	}
