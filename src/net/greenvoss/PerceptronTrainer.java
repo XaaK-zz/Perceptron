@@ -47,5 +47,21 @@ public class PerceptronTrainer {
 		}
 	}
 	
+	public boolean evaluateOnDataRow(int[] data, int targetClass) {
+		//first send the data into the perceptron
+		for(int x=0;x<data.length;x++){
+			this.perceptron.setInput(x+1, data[x]);
+		}
+		//get the actual output from the threshold
+		int output = this.perceptron.threshold();
+		//check if the target does not equal the output 
+		if(targetClass != output) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	
 	
 }

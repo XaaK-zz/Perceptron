@@ -2,7 +2,12 @@ package net.greenvoss.experiment;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import net.greenvoss.PerceptronTrainer;
+
 import org.apache.commons.io.FileUtils;
 
 /**
@@ -44,7 +49,56 @@ public class ExperimentBase {
 	 * @param row String containing csv data
 	 * @return Array of string values
 	 */
-	String[] getRowContents(String row) {
-		return row.split("[,]");
+	int[] getRowContents(String row) {
+		String[] temp = row.split("[,]");
+		int[] intArray = new int[temp.length];
+		for(int x=0;x<temp.length;x++){
+			intArray[x] = Integer.parseInt(temp[x]);
+		}
+		return intArray;
+	}
+	
+	PerceptronTrainer getTrainer(){
+		return new PerceptronTrainer(); 
+	}
+	
+	List<PerceptronTrainer> getPerceptronTrainers(int numberOfTrainers, int inputSize, float learningRate) {
+		List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
+		for(int x=0;x<numberOfTrainers;x++){
+			PerceptronTrainer trainer = getTrainer();
+			trainer.init(inputSize, learningRate);
+			list.add(trainer);
+		}
+		return list;
+	}
+	
+	ExperimentMetrics calculateMetrics(List<PerceptronTrainer> trainerList, String[] fileData, int targetDigit) {
+		ExperimentMetrics metrics = new ExperimentMetrics();
+		//calculate accuracy on the sets
+		for(int x=0;x<trainerList.size();x++) {
+			if(x != targetDigit){
+				PerceptronTrainer current = trainerList.get(x);
+				for(String fileRow : fileData) {
+					int[] rowData = this.getRowContents(fileRow);
+					if(rowData[rowData.length-1] == targetDigit) {
+						if(current.evaluateOnDataRow(rowData, 1)) {
+							metrics.TruePositives++;
+						}
+						else{
+							metrics.FalseNegatives++;
+						}
+					}
+					else if(rowData[rowData.length-1] == x) {
+						if(current.evaluateOnDataRow(rowData, -1)){
+							metrics.TrueNegatives++;
+						}
+						else{
+							metrics.FalsePositives++;
+						}
+					}
+				}
+			}
+		}
+		return metrics;
 	}
 }
