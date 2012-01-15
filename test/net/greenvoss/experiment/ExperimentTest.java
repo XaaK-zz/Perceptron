@@ -78,31 +78,66 @@ public class ExperimentTest {
 		
 		//now construct list of data to get accuracy measurements on
 		//	This list combined with the mock Perceptron trainer makes this test work
-		String[] fileData = {
-			"1,0,0",	//correctly identified as zero (because the first element is the correct class (1 vs -1))
-			"0,0,0",	//incorrectly identified
-			"1,1,0",
-			"1,1,0",
-			"-1,2,1",	//The first four lines are evaluated for each of the trainers (since digit 0 is the selected digit)
-			"0,0,1",
-			"0,2,1",
-			"0,2,1",
-			"-1,2,2",
-			"-1,0,2",
-			"-1,2,2",
-			"0,2,2",
-		};
+		List<String> fileData = new ArrayList<String>();
+		fileData.add("1,0,0");	//correctly identified as zero (because the first element is the correct class (1 vs -1))
+		fileData.add("0,0,0");	//incorrectly identified
+		fileData.add("1,1,0");
+		fileData.add("1,1,0");
+		fileData.add("-1,2,1");	//The first four lines are evaluated for each of the trainers (since digit 0 is the selected digit)
+		fileData.add("0,0,1");
+		fileData.add("0,2,1");
+		fileData.add("0,2,1");
+		fileData.add("-1,2,2");
+		fileData.add("-1,0,2");
+		fileData.add("-1,2,2");
+		fileData.add("0,2,2");
 		
 		ExperimentOne experimentOne = new ExperimentOne();
-		ExperimentMetrics metrics = experimentOne.calculateMetrics(list, fileData, 0);
+		List<ExperimentMetrics> metrics = experimentOne.calculateMetrics(list, fileData, 0);
 		
 		Assert.assertNotNull("Metrics should not be null",metrics);
-		Assert.assertEquals("Invalid TruePositives",6,metrics.TruePositives);
-		Assert.assertEquals("Invalid TrueNegatives",4,metrics.TrueNegatives);
-		Assert.assertEquals("Invalid FalsePositives",4,metrics.FalsePositives);
-		Assert.assertEquals("Invalid FalseNegatives",2,metrics.FalseNegatives);
-		Assert.assertEquals("Invalid Accuracy",(float)10/(float)16,metrics.getAccuracy());
+		Assert.assertEquals("Invalid number of metrics.",3,metrics.size());
+		Assert.assertEquals("Invalid TruePositives for digit 1",3,metrics.get(1).TruePositives);
+		Assert.assertEquals("Invalid TrueNegatives for digit 1",1,metrics.get(1).TrueNegatives);
+		Assert.assertEquals("Invalid FalsePositives for digit 1",3,metrics.get(1).FalsePositives);
+		Assert.assertEquals("Invalid FalseNegatives for digit 1",1,metrics.get(1).FalseNegatives);
+		Assert.assertEquals("Invalid Accuracy for digit 1",(float)4/(float)8,metrics.get(1).getAccuracy());
 		
+		Assert.assertEquals("Invalid TruePositives for digit 2",3,metrics.get(2).TruePositives);
+		Assert.assertEquals("Invalid TrueNegatives for digit 2",3,metrics.get(2).TrueNegatives);
+		Assert.assertEquals("Invalid FalsePositives for digit 2",1,metrics.get(2).FalsePositives);
+		Assert.assertEquals("Invalid FalseNegatives for digit 2",1,metrics.get(2).FalseNegatives);
+		Assert.assertEquals("Invalid Accuracy for digit 2",(float)6/(float)8,metrics.get(2).getAccuracy());
+		
+	}
+	
+	@Test
+	public void testTraining(){
+		ExperimentOne experimentOne = new ExperimentOne();
+		List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
+		//first create list of trainers 
+		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
+		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
+		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
+		
+		//now construct list of data to train on
+		List<String> fileData = new ArrayList<String>();
+		fileData.add("1,0,0");	
+		fileData.add("0,0,0");	
+		fileData.add("1,1,0");
+		fileData.add("1,1,0");
+		fileData.add("-1,2,1");	
+		fileData.add("0,0,1");
+		fileData.add("0,2,1");
+		fileData.add("0,2,1");
+		fileData.add("-1,2,2");
+		fileData.add("-1,0,2");
+		fileData.add("-1,2,2");
+		fileData.add("0,2,2");
+		
+		//train data
+		int epochCount = experimentOne.train(list, fileData, 0,90.0,1000);
+		System.out.println("epochCount: " + epochCount);
 	}
 	
 	//@Test

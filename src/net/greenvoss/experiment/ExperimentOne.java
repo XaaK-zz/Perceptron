@@ -1,8 +1,6 @@
 package net.greenvoss.experiment;
 
-import java.util.ArrayList;
 import java.util.List;
-
 import net.greenvoss.PerceptronTrainer;
 
 public class ExperimentOne extends ExperimentBase {
@@ -17,26 +15,15 @@ public class ExperimentOne extends ExperimentBase {
 		List<String> fileData = this.getFileContents(trainingDataPath);
 		
 		//train on the data
-		int epoch = 1;
-		double accuracy = 0.0;
+		int epochs = this.train(trainerList,fileData,digit,90.0,1000);
 		
-		while(accuracy < 90.0) {
-			for(String fileRow : fileData) {
-				int[] rowData = this.getRowContents(fileRow);
-				//check the last element in the row
-				if(rowData[rowData.length-1] == digit) {
-					//Positive example (i.e. same digit)
-					for(int x=0;x<trainerList.size();x++) {
-						trainerList.get(x).trainOnDataRow(rowData, 1);
-					}
-				}
-				else {
-					//Negative example (i.e. some other digit)
-					trainerList.get(rowData[rowData.length-1]).trainOnDataRow(rowData, -1);
-				}
-			}
-			
-		}
+		//done training - get testing metrics//////////////////////////
+		//Load testing data
+		List<String> testFileData = this.getFileContents(testingDataPath);
+		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, testFileData, digit);
+		
+		//Done - we can now print out the metrics
+		this.ReportResults(trainerList, metrics, epochs);
 	}
 
 }

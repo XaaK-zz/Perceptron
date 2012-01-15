@@ -7,6 +7,20 @@ public class PerceptronTrainer {
 	Perceptron perceptron;
 	float learningRate;
 	
+	/**
+	 * Basic contructor
+	 */
+	public PerceptronTrainer(){}
+	
+	public PerceptronTrainer(int inputNodes, float learningRate, float[] weights){
+		//init the perceptron
+		this.init(inputNodes, learningRate);
+		//set weights
+		for(int x=0;x<weights.length;x++){
+			this.perceptron.setWeight(x, weights[x]);
+		}
+	}
+	
 	public void init(int inputNodes, float learningRate) {
 		this.learningRate = learningRate;
 		this.perceptron = new Perceptron(inputNodes);

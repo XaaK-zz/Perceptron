@@ -72,33 +72,111 @@ public class ExperimentBase {
 		return list;
 	}
 	
-	ExperimentMetrics calculateMetrics(List<PerceptronTrainer> trainerList, String[] fileData, int targetDigit) {
-		ExperimentMetrics metrics = new ExperimentMetrics();
+	List<ExperimentMetrics> calculateMetrics(List<PerceptronTrainer> trainerList, List<String> fileData, int targetDigit) {
+		List<ExperimentMetrics> metrics = new ArrayList<ExperimentMetrics>();
 		//calculate accuracy on the sets
 		for(int x=0;x<trainerList.size();x++) {
 			if(x != targetDigit){
+				ExperimentMetrics metric = new ExperimentMetrics();
 				PerceptronTrainer current = trainerList.get(x);
 				for(String fileRow : fileData) {
 					int[] rowData = this.getRowContents(fileRow);
 					if(rowData[rowData.length-1] == targetDigit) {
 						if(current.evaluateOnDataRow(rowData, 1)) {
-							metrics.TruePositives++;
+							metric.TruePositives++;
 						}
 						else{
-							metrics.FalseNegatives++;
+							metric.FalseNegatives++;
 						}
 					}
 					else if(rowData[rowData.length-1] == x) {
 						if(current.evaluateOnDataRow(rowData, -1)){
-							metrics.TrueNegatives++;
+							metric.TrueNegatives++;
 						}
 						else{
-							metrics.FalsePositives++;
+							metric.FalsePositives++;
 						}
 					}
 				}
+				metrics.add(metric);
+			}
+			else {
+				//need to add a dummy metric in here to keep counts accurate
+				metrics.add(new ExperimentMetrics() {
+					@Override
+					public float getAccuracy() {
+						return 1;
+					}
+				});
 			}
 		}
 		return metrics;
+	}
+
+	/**
+	 * Core training method.  Accepts list of PerceptronTrainers and FileData and iterates over the
+	 * 	file data until the accuracy on the trainers hits 90% (or we have tried for 1000 times)
+	 * @param trainerList
+	 * @param fileData
+	 * @param targetDigit
+	 * @return Number of epochs trained
+	 */
+	int train(List<PerceptronTrainer> trainerList, List<String> fileData, 
+			int targetDigit, double accuracyTarget, int maxEpochs){
+		int epoch = 0;
+		double accuracy = 0.0;
+		List<ExperimentMetrics> metrics = null;
+		
+		while(accuracy < accuracyTarget && epoch < maxEpochs) {
+			for(String fileRow : fileData) {
+				int[] rowData = this.getRowContents(fileRow);
+				//check the last element in the row
+				if(rowData[rowData.length-1] == targetDigit) {
+					//Positive example (i.e. same digit)
+					for(int x=0;x<trainerList.size();x++) {
+						trainerList.get(x).trainOnDataRow(rowData, 1);
+					}
+				}
+				else {
+					//Negative example (i.e. some other digit)
+					trainerList.get(rowData[rowData.length-1]).trainOnDataRow(rowData, -1);
+				}
+			}
+			//calculate the metrics for this run
+			metrics = this.calculateMetrics(trainerList, fileData, targetDigit);
+			
+            for(int i=0; i < metrics.size() ; i++)
+            	accuracy = accuracy + metrics.get(i).getAccuracy();
+            
+             //calculate average value
+            accuracy = (accuracy / metrics.size()) * 100;
+            
+			//update the epoch counter
+			epoch++;
+			//ensure we don't loop forever...
+			if(epoch > 1000)
+				accuracy = 100;
+		}//end while loop
+		
+		return epoch;
+	}
+	
+	/**
+	 * Method used to display the results of an experiment.
+	 * 	Can also be overridden in the unit tests to check for the final results of a test
+	 * @param trainerList Final list of PerceptronTrainers after an experiment is complete
+	 * @param metrics Final list of metrics, calculated on the training data
+	 * @param epochs 
+	 */
+	void ReportResults(List<PerceptronTrainer> trainerList, List<ExperimentMetrics> metrics, int epochs){
+		for(int x=0;x<metrics.size();x++){
+			ExperimentMetrics metric = metrics.get(x);
+			System.out.printf("Metrics for digit: %i after %i epochs.\n ",x,epochs);
+			System.out.printf("TruePositives: %i\n",metric.TruePositives);
+			System.out.printf("TrueNegatives: %i\n",metric.TrueNegatives);
+			System.out.printf("FalsePositives: %i\n",metric.FalsePositives);
+			System.out.printf("FalseNegatives: %i\n",metric.FalseNegatives);
+			System.out.printf("Accuracy: %f\n",metric.getAccuracy());
+		}
 	}
 }
