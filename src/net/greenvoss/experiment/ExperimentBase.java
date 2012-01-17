@@ -16,6 +16,8 @@ import org.apache.commons.io.FileUtils;
  */
 public class ExperimentBase {
 	
+	final static double TRAINING_CONSTANT = 0.1;
+	
 	/**
 	 * Common method used to execute the derived experiments
 	 * @param trainingDataPath Path to the training data file
@@ -143,7 +145,7 @@ public class ExperimentBase {
 	 * @return Number of epochs trained
 	 */
 	int train(List<PerceptronTrainer> trainerList, List<String> fileData, 
-			int targetDigit, int maxEpochs){
+			int targetDigit, int minEpochs, int maxEpochs){
 		int epoch = 0;
 		double lastAccuracy = 0.0;
 		double currentAccuracy = 100.0;
@@ -152,7 +154,7 @@ public class ExperimentBase {
 		currentAccuracy = getAccuracy(trainerList, fileData, targetDigit);
 		 
 		//keep looping until we stablize or have run for 1000 times
-		while((Math.abs(currentAccuracy - lastAccuracy) > 0.1) && (epoch < maxEpochs)) {
+		while(this.shouldKeepTraining(epoch, minEpochs, maxEpochs, lastAccuracy, currentAccuracy)) {
 			lastAccuracy = currentAccuracy;
 			for(String fileRow : fileData) {
 				int[] rowData = this.getRowContents(fileRow);
@@ -178,6 +180,25 @@ public class ExperimentBase {
 		return epoch;
 	}
 
+	/**
+	 * Extracted logic to determine if the training epochs should continue or not
+	 */
+	boolean shouldKeepTraining(int epochs, int minEpochs, int maxEpochs,
+			double lastAccuracy, double currentAccuracy){
+		if(epochs < minEpochs){
+			return true;
+		}
+		else if(epochs >= maxEpochs){
+			return false;
+		}
+		else if(Math.abs(currentAccuracy - lastAccuracy) > TRAINING_CONSTANT){
+			return true;
+		}
+		else {
+			return false;
+		}
+			
+	}
 	/**
 	 * Refactored method to calculate the overall accuracy of the list of trainers on the current data 
 	 * @return Accuracy of the set of trainers
@@ -208,8 +229,11 @@ public class ExperimentBase {
 	 * @param trainerList Final list of PerceptronTrainers after an experiment is complete
 	 * @param metrics Final list of metrics, calculated on the training data
 	 * @param epochs Number of training runs executed
+	 * @param epochs String to print before the results
 	 */
-	void ReportResults(List<PerceptronTrainer> trainerList, List<ExperimentMetrics> metrics, int epochs){
+	void ReportResults(List<PerceptronTrainer> trainerList, List<ExperimentMetrics> metrics, 
+			int epochs, String header){
+		System.out.println(header);
 		for(int x=0;x<metrics.size();x++){
 			ExperimentMetrics metric = metrics.get(x);
 			System.out.println("Metrics for digit: " + x + " after " + epochs + " epochs.");
@@ -219,5 +243,6 @@ public class ExperimentBase {
 			System.out.println("FalseNegatives: " + metric.FalseNegatives);
 			System.out.println("Accuracy: " + metric.getAccuracy());
 		}
+		System.out.println("-----------------------------------------------");
 	}
 }

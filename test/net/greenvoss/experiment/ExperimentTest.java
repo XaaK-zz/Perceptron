@@ -136,7 +136,7 @@ public class ExperimentTest {
 		fileData.add("0,2,2");
 		
 		//train data
-		int epochCount = experimentOne.train(list, fileData, 0,1000);
+		int epochCount = experimentOne.train(list, fileData, 0,0,1000);
 		//ensure the epoch count is not 1000
 		Assert.assertTrue("Invalid number of epochs.",epochCount < 1000);
 		//ensure the weights have been modified
@@ -183,7 +183,7 @@ public class ExperimentTest {
 			
 			@Override
 			void ReportResults(List<PerceptronTrainer> trainerList,
-					List<ExperimentMetrics> metrics, int epochs) {
+					List<ExperimentMetrics> metrics, int epochs, String header) {
 				
 				//Examine metrics and decide if we have trained correctly
 				Assert.assertTrue("Invalid accuracy for digit 1. - " + metrics.get(1).getAccuracy(),
@@ -195,6 +195,30 @@ public class ExperimentTest {
 		//execute the experiment
 		experimentOne.execute("", "", 0);
 		
+	}
+	
+	@Test
+	public void testShouldKeepTraining_NotConverged(){
+		ExperimentBase o = new ExperimentBase();
+		Assert.assertTrue(o.shouldKeepTraining(1, 0, 1000, 63, 75));
+	}
+	
+	@Test
+	public void testShouldNotKeepTraining_Converged(){
+		ExperimentBase o = new ExperimentBase();
+		Assert.assertFalse(o.shouldKeepTraining(1, 0, 1000, 75, 75.1));
+	}
+	
+	@Test
+	public void testShouldNotKeepTraining_MaxEpochs(){
+		ExperimentBase o = new ExperimentBase();
+		Assert.assertFalse(o.shouldKeepTraining(10, 0, 10, 65, 75.1));
+	}
+	
+	@Test
+	public void testShouldKeepTraining_MinEpochs(){
+		ExperimentBase o = new ExperimentBase();
+		Assert.assertTrue(o.shouldKeepTraining(10, 15, 20, 75, 75));
 	}
 	
 	/**

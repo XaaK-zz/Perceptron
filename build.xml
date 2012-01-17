@@ -27,14 +27,14 @@
   	
   		<jar jarfile="./Perceptron.jar" basedir="${build}">
   	    	<manifest>
-  	    	      <attribute name="Main-Class"
+  	    	    <attribute name="Main-Class"
   	    	            value="net.greenvoss.PerceptronDriver"/>
   	    		<attribute name="Class-Path"
   	    		  	   	value="lib/commons-io-2.1.jar"/>
-  	    	    </manifest>
+  	    	</manifest>
   	    </jar>
   	
-  	<!--<delete dir="${build}"/>-->
+  	<delete dir="${build}"/>
   </target>
 
 </project>

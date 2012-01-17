@@ -3,7 +3,7 @@ package net.greenvoss.experiment;
 import java.util.List;
 import net.greenvoss.PerceptronTrainer;
 
-public class ExperimentOne extends ExperimentBase {
+public class ExperimentTwo extends ExperimentBase {
 
 	List<PerceptronTrainer> trainerList;
 	
@@ -15,10 +15,11 @@ public class ExperimentOne extends ExperimentBase {
 		List<String> fileData = this.getFileContents(trainingDataPath);
 		
 		//train on the data
-		int epochs = this.train(trainerList,fileData,digit,0,1000);
+		//	NOTE: We are forcing the min epoch to 10 to overtrain the perceptrons
+		int epochs = this.train(trainerList,fileData,digit,10,1000);
 		//show results of the testing data
 		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, fileData, digit);
-		this.ReportResults(trainerList, metrics, epochs,"Experiment One metrics on training data:");
+		this.ReportResults(trainerList, metrics, epochs, "Experiment Two metrics on training data:");
 		
 		//done training - get testing metrics//////////////////////////
 		//Load testing data
@@ -26,7 +27,7 @@ public class ExperimentOne extends ExperimentBase {
 		metrics = this.calculateMetrics(trainerList, testFileData, digit);
 		
 		//Done - we can now print out the metrics
-		this.ReportResults(trainerList, metrics, epochs, "Experiment One metrics on testing data:");
+		this.ReportResults(trainerList, metrics, epochs, "Experiment Two metrics on testing data:");
 	}
 
 }
