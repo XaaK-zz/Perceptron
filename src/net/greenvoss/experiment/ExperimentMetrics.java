@@ -11,6 +11,6 @@ public class ExperimentMetrics {
 	public int FalseNegatives = 0;
 	
 	public float getAccuracy() {
-		return (float)(TruePositives + TrueNegatives) / (float)(FalsePositives + FalseNegatives + TruePositives + TrueNegatives);
+		return ((float)(TruePositives + TrueNegatives) / (float)(FalsePositives + FalseNegatives + TruePositives + TrueNegatives)) * 100;
 	}
 }

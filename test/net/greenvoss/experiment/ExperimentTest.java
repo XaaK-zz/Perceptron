@@ -65,7 +65,7 @@ public class ExperimentTest {
 		metrics.FalsePositives = 5;
 		metrics.FalseNegatives = 5;
 		
-		Assert.assertEquals("Invalid Accuracy", .5f,metrics.getAccuracy());
+		Assert.assertEquals("Invalid Accuracy", 50.0f,metrics.getAccuracy());
 	}
 	
 	@Test
@@ -101,13 +101,13 @@ public class ExperimentTest {
 		Assert.assertEquals("Invalid TrueNegatives for digit 1",1,metrics.get(1).TrueNegatives);
 		Assert.assertEquals("Invalid FalsePositives for digit 1",3,metrics.get(1).FalsePositives);
 		Assert.assertEquals("Invalid FalseNegatives for digit 1",1,metrics.get(1).FalseNegatives);
-		Assert.assertEquals("Invalid Accuracy for digit 1",(float)4/(float)8,metrics.get(1).getAccuracy());
+		Assert.assertEquals("Invalid Accuracy for digit 1",50.0f,metrics.get(1).getAccuracy());
 		
 		Assert.assertEquals("Invalid TruePositives for digit 2",3,metrics.get(2).TruePositives);
 		Assert.assertEquals("Invalid TrueNegatives for digit 2",3,metrics.get(2).TrueNegatives);
 		Assert.assertEquals("Invalid FalsePositives for digit 2",1,metrics.get(2).FalsePositives);
 		Assert.assertEquals("Invalid FalseNegatives for digit 2",1,metrics.get(2).FalseNegatives);
-		Assert.assertEquals("Invalid Accuracy for digit 2",(float)6/(float)8,metrics.get(2).getAccuracy());
+		Assert.assertEquals("Invalid Accuracy for digit 2",75.0f,metrics.get(2).getAccuracy());
 		
 	}
 	
@@ -136,49 +136,64 @@ public class ExperimentTest {
 		fileData.add("0,2,2");
 		
 		//train data
-		int epochCount = experimentOne.train(list, fileData, 0,90.0,1000);
-		System.out.println("epochCount: " + epochCount);
+		int epochCount = experimentOne.train(list, fileData, 0,1000);
+		//ensure the epoch count is not 1000
+		Assert.assertTrue("Invalid number of epochs.",epochCount < 1000);
+		//ensure the weights have been modified
+		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(0) != .5f);
+		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(1) != .5f);
+		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(2) != .5f);
+		
+		Assert.assertTrue("Invalid weight.",list.get(2).getWeightValue(0) != .5f);
+		Assert.assertTrue("Invalid weight.",list.get(2).getWeightValue(1) != .5f);
+		Assert.assertTrue("Invalid weight.",list.get(2).getWeightValue(2) != .5f);
 	}
 	
-	//@Test
+	@Test
 	public void simpleExperimentOneTest() {
 		ExperimentOne experimentOne = new ExperimentOne() {
+			int fileContentsCall = 0;
 			@Override
-			List<PerceptronTrainer> getPerceptronTrainers(int numberOfTrainers,
-					int inputSize, float learningRate) {
-				//Just return two trainers
-				PerceptronTrainer trainer = new PerceptronTrainer();
-				//Just set two input nodes
-				trainer.init(2, .2f);
-				List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
-				list.add(trainer);
-				//second one
-				trainer = new PerceptronTrainer();
-				trainer.init(2, .2f);
-				list.add(trainer);
-				return list;
+			List<String> getFileContents(String file) {
+				if(fileContentsCall == 0) {
+					//return some sample data (just 2 records for digit 0 and 1 for digit 1)
+					List<String> list = new ArrayList<String>();
+					list.add("0,1,6,15,12,1,0,0,0,7,16,6,6,10,0,0,0,8,16,2,0,11,2,0,0,5,16,3,0,5,7,0,0,7,13,3,0,8,7,0,0,4,12,0,1,13,5,0,0,0,14,9,15,9,0,0,0,0,6,14,7,1,0,0,0");
+					list.add("0,0,10,16,6,0,0,0,0,7,16,8,16,5,0,0,0,11,16,0,6,14,3,0,0,12,12,0,0,11,11,0,0,12,12,0,0,8,12,0,0,7,15,1,0,13,11,0,0,0,16,8,10,15,3,0,0,0,10,16,15,3,0,0,0");
+					list.add("0,0,2,13,9,0,0,0,0,0,14,11,12,7,0,0,0,6,16,1,0,16,0,0,0,5,12,0,0,11,5,0,0,8,13,0,0,8,7,0,0,1,16,0,0,9,8,0,0,0,13,3,6,16,1,0,0,0,3,16,14,4,0,0,0");
+					list.add("0,0,0,3,16,11,1,0,0,0,0,8,16,16,1,0,0,0,0,9,16,14,0,0,0,1,7,16,16,11,0,0,0,9,16,16,16,8,0,0,0,1,8,6,16,7,0,0,0,0,0,5,16,9,0,0,0,0,0,2,14,14,1,0,1");
+					list.add("0,0,9,13,1,0,0,0,0,0,8,16,6,0,0,0,0,0,7,16,10,0,0,0,0,0,13,16,10,0,0,0,0,0,9,16,14,0,0,0,0,0,0,7,16,5,0,0,0,0,3,9,16,13,8,5,0,0,4,15,16,16,16,16,1");
+					list.add("0,0,0,0,10,13,0,0,0,0,0,0,15,16,0,0,0,0,0,7,16,14,0,0,0,3,12,16,16,13,0,0,0,3,11,9,16,9,0,0,0,0,0,0,16,9,0,0,0,0,0,0,15,12,0,0,0,0,0,0,8,15,2,0,1");
+					fileContentsCall++;
+					return list;
+				}
+				else {
+					//return testing data (3 digit 0 and 3 digit 1)
+					List<String> list = new ArrayList<String>();
+					list.add("0,0,5,13,9,1,0,0,0,0,13,15,10,15,5,0,0,3,15,2,0,11,8,0,0,4,12,0,0,8,8,0,0,5,8,0,0,9,8,0,0,4,11,0,1,12,7,0,0,2,14,5,10,12,0,0,0,0,6,13,10,0,0,0,0");
+					list.add("0,0,1,9,15,11,0,0,0,0,11,16,8,14,6,0,0,2,16,10,0,9,9,0,0,1,16,4,0,8,8,0,0,4,16,4,0,8,8,0,0,1,16,5,1,11,3,0,0,0,12,12,10,10,0,0,0,0,1,10,13,3,0,0,0");
+					list.add("0,0,3,13,11,7,0,0,0,0,11,16,16,16,2,0,0,4,16,9,1,14,2,0,0,4,16,0,0,16,2,0,0,0,16,1,0,12,8,0,0,0,15,9,0,13,6,0,0,0,9,14,9,14,1,0,0,0,2,12,13,4,0,0,0");
+					list.add("0,0,0,12,13,5,0,0,0,0,0,11,16,9,0,0,0,0,3,15,16,6,0,0,0,7,15,16,16,2,0,0,0,0,1,16,16,3,0,0,0,0,1,16,16,6,0,0,0,0,1,16,16,6,0,0,0,0,0,11,16,10,0,0,1");
+					list.add("0,0,0,0,14,13,1,0,0,0,0,5,16,16,2,0,0,0,0,14,16,12,0,0,0,1,10,16,16,12,0,0,0,3,12,14,16,9,0,0,0,0,0,5,16,15,0,0,0,0,0,4,16,14,0,0,0,0,0,1,13,16,1,0,1");
+					list.add("0,0,0,2,16,16,2,0,0,0,0,4,16,16,2,0,0,1,4,12,16,12,0,0,0,7,16,16,16,12,0,0,0,0,3,10,16,14,0,0,0,0,0,8,16,12,0,0,0,0,0,6,16,16,2,0,0,0,0,2,12,15,4,0,1");
+					fileContentsCall++;
+					return list;
+				}
 			}
 			
 			@Override
-			List<String> getFileContents(String file) {
-				//return a simple file for testing (only 2 nodes and a class)
-				List<String> list = new ArrayList<String>();
-				list.add("0,0,1");
-				list.add("1,0,1");
-				list.add("0,1,1");
-				list.add("1,1,1");
-				list.add("2,2,0");
-				list.add("2,0,0");
-				list.add("0,2,0");
-				list.add("2,2,0");
+			void ReportResults(List<PerceptronTrainer> trainerList,
+					List<ExperimentMetrics> metrics, int epochs) {
 				
-				return list;
+				//Examine metrics and decide if we have trained correctly
+				Assert.assertTrue("Invalid accuracy for digit 1. - " + metrics.get(1).getAccuracy(),
+						metrics.get(1).getAccuracy() >= 50.0);
+				return;
 			}
 		};
 		
 		//execute the experiment
-		//experimentOne.execute("", "", 1);
-		
+		experimentOne.execute("", "", 0);
 		
 	}
 	

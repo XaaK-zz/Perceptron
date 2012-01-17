@@ -1,12 +1,17 @@
 package net.greenvoss;
 
+import java.util.List;
+
+import net.greenvoss.experiment.ExperimentBase;
+import net.greenvoss.experiment.ExperimentFactory;
+
 public class PerceptronDriver {
 
 	static void usage() {
 		System.console().printf("Perceptron.jar <trainingData.tra> <testingData.tes> <digit>\n"+ 
-				"trainingData.tra: File path to the training data file.\n" + 
-				"testingData.tes: File path to the testing data file.\n" + 
-				"digit: single digit to use as the test basis.\n");
+				"\t\ttrainingData.tra: File path to the training data file.\n" + 
+				"\t\ttestingData.tes: File path to the testing data file.\n" + 
+				"\t\tdigit: single digit to use as the test basis.\n");
 	}
 	
 	/**
@@ -19,6 +24,10 @@ public class PerceptronDriver {
 		if(args.length < 3) {
 			usage();
 			return;
+		}
+		List<ExperimentBase> list = ExperimentFactory.getExperiments();
+		for(ExperimentBase experiment : list){
+			experiment.execute(args[0], args[1], Integer.parseInt(args[2]));
 		}
 	}
 

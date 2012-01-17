@@ -15,12 +15,15 @@ public class ExperimentOne extends ExperimentBase {
 		List<String> fileData = this.getFileContents(trainingDataPath);
 		
 		//train on the data
-		int epochs = this.train(trainerList,fileData,digit,90.0,1000);
+		int epochs = this.train(trainerList,fileData,digit,1000);
+		//show results of the testing data
+		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, fileData, digit);
+		this.ReportResults(trainerList, metrics, epochs);
 		
 		//done training - get testing metrics//////////////////////////
 		//Load testing data
 		List<String> testFileData = this.getFileContents(testingDataPath);
-		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, testFileData, digit);
+		metrics = this.calculateMetrics(trainerList, testFileData, digit);
 		
 		//Done - we can now print out the metrics
 		this.ReportResults(trainerList, metrics, epochs);

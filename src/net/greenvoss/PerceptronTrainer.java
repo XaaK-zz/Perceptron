@@ -77,5 +77,8 @@ public class PerceptronTrainer {
 		}
 	}
 	
+	public float getWeightValue(int node){
+		return this.perceptron.getWeightValue(node);
+	}
 	
 }
