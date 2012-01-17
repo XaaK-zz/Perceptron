@@ -1,0 +1,40 @@
+<project name="Perceptron" default="compile" basedir=".">
+	<description>
+	    Build file for Perceptron 
+	</description>
+	<!-- set global properties for this build -->
+	<property name="src"     location="src"/>
+	<property name="test"    location="test"/>
+	<property name="build"   location="build"/>
+	<property name="lib.dir" location="lib"/>
+
+ 	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+ 	</path>
+  
+	<target name="init">
+   		<!-- Create the build directory structure used by compile -->
+    	<mkdir dir="${build}"/>
+  	</target>
+
+  <target name="compile" 
+        description="compile the source " depends="init">
+  		<copy todir="${build}/lib">
+  			<fileset dir="${lib.dir}" includes="**/*.jar"/>
+  		</copy>
+    	<!-- Compile the java code from ${src} into ${build} -->
+    	<javac srcdir="${src}" destdir="${build}" classpathref="classpath"/>
+  	
+  		<jar jarfile="./Perceptron.jar" basedir="${build}">
+  	    	<manifest>
+  	    	      <attribute name="Main-Class"
+  	    	            value="net.greenvoss.PerceptronDriver"/>
+  	    		<attribute name="Class-Path"
+  	    		  	   	value="lib/commons-io-2.1.jar"/>
+  	    	    </manifest>
+  	    </jar>
+  	
+  	<!--<delete dir="${build}"/>-->
+  </target>
+
+</project>
