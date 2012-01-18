@@ -13,6 +13,8 @@ public class ExperimentFactory {
 		list.add(new ExperimentOne());
 		list.add(new ExperimentTwo());
 		list.add(new ExperimentThree());
+		list.add(new ExperimentFour());
+		list.add(new ExperimentFive());
 		
 		return list;
 	}
