@@ -16,10 +16,11 @@ public class ExperimentThree extends ExperimentBase {
 		
 		//train on the data
 		//	NOTE: We are forcing the min epoch to 10 to overtrain the perceptrons
-		int epochs = this.train(trainerList,fileData,digit,0,2);
+		this.train(trainerList,fileData,digit,0,2);
+		
 		//show results of the testing data
 		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, fileData, digit);
-		this.ReportResults(trainerList, metrics, epochs, "Experiment Three metrics on training data:");
+		this.ReportResults(trainerList, metrics, "Experiment Three metrics on training data:");
 		
 		//done training - get testing metrics//////////////////////////
 		//Load testing data
@@ -27,7 +28,7 @@ public class ExperimentThree extends ExperimentBase {
 		metrics = this.calculateMetrics(trainerList, testFileData, digit);
 		
 		//Done - we can now print out the metrics
-		this.ReportResults(trainerList, metrics, epochs, "Experiment Three metrics on testing data:");
+		this.ReportResults(trainerList, metrics, "Experiment Three metrics on testing data:");
 	}
 
 }

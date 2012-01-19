@@ -116,9 +116,15 @@ public class ExperimentTest {
 		ExperimentOne experimentOne = new ExperimentOne();
 		List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
 		//first create list of trainers 
-		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
-		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
-		list.add(new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f}));
+		PerceptronTrainer trainer = new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f});
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 0);
+		list.add(trainer);
+		trainer = new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f});
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 1);
+		list.add(trainer);
+		trainer = new PerceptronTrainer(2,0.2f,new float[] {.5f,.5f,.5f});
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 2);
+		list.add(trainer);
 		
 		//now construct list of data to train on
 		List<String> fileData = new ArrayList<String>();
@@ -136,9 +142,8 @@ public class ExperimentTest {
 		fileData.add("0,2,2");
 		
 		//train data
-		int epochCount = experimentOne.train(list, fileData, 0,0,1000);
-		//ensure the epoch count is not 1000
-		Assert.assertTrue("Invalid number of epochs.",epochCount < 1000);
+		experimentOne.train(list, fileData, 0,0,1000);
+		
 		//ensure the weights have been modified
 		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(0) != .5f);
 		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(1) != .5f);
@@ -183,7 +188,7 @@ public class ExperimentTest {
 			
 			@Override
 			void ReportResults(List<PerceptronTrainer> trainerList,
-					List<ExperimentMetrics> metrics, int epochs, String header) {
+					List<ExperimentMetrics> metrics, String header) {
 				
 				//Examine metrics and decide if we have trained correctly
 				Assert.assertTrue("Invalid accuracy for digit 1. - " + metrics.get(1).getAccuracy(),

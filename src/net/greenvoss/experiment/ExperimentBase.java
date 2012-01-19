@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 public class ExperimentBase {
 	
 	final static double TRAINING_CONSTANT = 0.1;
+	public final static String DYNAMIC_PROPERTY_DIGIT = "DigitTarget";
 	
 	/**
 	 * Common method used to execute the derived experiments
@@ -50,7 +51,7 @@ public class ExperimentBase {
 	 * @param row String containing csv data
 	 * @return Array of string values
 	 */
-	int[] getRowContents(String row) {
+	public int[] getRowContents(String row) {
 		String[] temp = row.split("[,]");
 		int[] intArray = new int[temp.length];
 		for(int x=0;x<temp.length;x++){
@@ -80,6 +81,7 @@ public class ExperimentBase {
 		for(int x=0;x<numberOfTrainers;x++){
 			PerceptronTrainer trainer = getTrainer();
 			trainer.init(inputSize, learningRate);
+			trainer.setDynamicData(DYNAMIC_PROPERTY_DIGIT, (Integer)x);
 			list.add(trainer);
 		}
 		return list;
@@ -96,41 +98,11 @@ public class ExperimentBase {
 	List<ExperimentMetrics> calculateMetrics(List<PerceptronTrainer> trainerList, List<String> fileData, int targetDigit) {
 		List<ExperimentMetrics> metrics = new ArrayList<ExperimentMetrics>();
 		//calculate accuracy on the sets
-		for(int x=0;x<trainerList.size();x++) {
-			if(x != targetDigit){
-				ExperimentMetrics metric = new ExperimentMetrics();
-				PerceptronTrainer current = trainerList.get(x);
-				for(String fileRow : fileData) {
-					int[] rowData = this.getRowContents(fileRow);
-					if(rowData[rowData.length-1] == targetDigit) {
-						if(current.evaluateOnDataRow(rowData, 1)) {
-							metric.TruePositives++;
-						}
-						else{
-							metric.FalseNegatives++;
-						}
-					}
-					else if(rowData[rowData.length-1] == x) {
-						if(current.evaluateOnDataRow(rowData, -1)){
-							metric.TrueNegatives++;
-						}
-						else{
-							metric.FalsePositives++;
-						}
-					}
-				}
-				metrics.add(metric);
-			}
-			else {
-				//need to add a dummy metric in here to keep counts accurate
-				metrics.add(new ExperimentMetrics() {
-					@Override
-					public float getAccuracy() {
-						return 100.0f;
-					}
-				});
-			}
+		for(PerceptronTrainer trainer : trainerList){
+			ExperimentMetrics metric = trainer.calculateMetrics(fileData, targetDigit, this);
+			metrics.add(metric);
 		}
+		
 		return metrics;
 	}
 
@@ -144,52 +116,27 @@ public class ExperimentBase {
 	 * @param maxEpochs Max number of times we will run the training data
 	 * @return Number of epochs trained
 	 */
-	int train(List<PerceptronTrainer> trainerList, List<String> fileData, 
+	void train(List<PerceptronTrainer> trainerList, List<String> fileData, 
 			int targetDigit, int minEpochs, int maxEpochs){
-		int epoch = 0;
-		double lastAccuracy = 0.0;
-		double currentAccuracy = 100.0;
 		
-		//get the current accuracy count
-		currentAccuracy = getAccuracy(trainerList, fileData, targetDigit);
-		 
-		//keep looping until we stablize or have run for 1000 times
-		while(this.shouldKeepTraining(epoch, minEpochs, maxEpochs, lastAccuracy, currentAccuracy)) {
-			lastAccuracy = currentAccuracy;
-			for(String fileRow : fileData) {
-				int[] rowData = this.getRowContents(fileRow);
-				//check the last element in the row
-				if(rowData[rowData.length-1] == targetDigit) {
-					//Positive example (i.e. same digit)
-					for(int x=0;x<trainerList.size();x++) {
-						trainerList.get(x).trainOnDataRow(rowData, 1);
-					}
-				}
-				else {
-					//Negative example (i.e. some other digit)
-					trainerList.get(rowData[rowData.length-1]).trainOnDataRow(rowData, -1);
-				}
-			}
-			//calculate the metrics for this run
-			currentAccuracy = this.getAccuracy(trainerList, fileData, targetDigit);
-			
-			//update the epoch counter
-			epoch++;
-		}//end while loop
-		
-		return epoch;
+		for(PerceptronTrainer trainer : trainerList){
+			trainer.train(this, fileData, targetDigit, minEpochs, maxEpochs);
+		}
 	}
 
 	/**
 	 * Extracted logic to determine if the training epochs should continue or not
 	 */
-	boolean shouldKeepTraining(int epochs, int minEpochs, int maxEpochs,
+	public boolean shouldKeepTraining(int epochs, int minEpochs, int maxEpochs,
 			double lastAccuracy, double currentAccuracy){
 		if(epochs < minEpochs){
 			return true;
 		}
 		else if(epochs >= maxEpochs){
 			return false;
+		}
+		else if(currentAccuracy == 0.0 || lastAccuracy == 0.0){
+			return true;
 		}
 		else if(Math.abs(currentAccuracy - lastAccuracy) > TRAINING_CONSTANT){
 			return true;
@@ -198,29 +145,6 @@ public class ExperimentBase {
 			return false;
 		}
 			
-	}
-	/**
-	 * Refactored method to calculate the overall accuracy of the list of trainers on the current data 
-	 * @return Accuracy of the set of trainers
-	 */
-	private double getAccuracy(List<PerceptronTrainer> trainerList,
-			List<String> fileData, int targetDigit) {
-		
-		List<ExperimentMetrics> metrics;
-		double currentAccuracy = 0.0;
-		
-		metrics = this.calculateMetrics(trainerList, fileData, targetDigit);
-		
-        for(int i=0; i < metrics.size() ; i++){
-        	//don't want to include the same digit target 
-        	if(i != targetDigit) {
-        		//add the accuracy to a running sum 
-        		currentAccuracy += metrics.get(i).getAccuracy();
-        	}
-        }
-        //divide the the size-1 to get the average
-        currentAccuracy = currentAccuracy / (metrics.size()-1);
-		return currentAccuracy;
 	}
 	
 	/**
@@ -232,11 +156,12 @@ public class ExperimentBase {
 	 * @param epochs String to print before the results
 	 */
 	void ReportResults(List<PerceptronTrainer> trainerList, List<ExperimentMetrics> metrics, 
-			int epochs, String header){
+			String header){
 		System.out.println(header);
 		for(int x=0;x<metrics.size();x++){
 			ExperimentMetrics metric = metrics.get(x);
-			System.out.println("Metrics for digit: " + x + " after " + epochs + " epochs.");
+			PerceptronTrainer trainer = trainerList.get(x);
+			System.out.println("Metrics for digit: " + x + " after " + trainer.getEpochsTrained() + " epochs.");
 			System.out.println("TruePositives: " + metric.TruePositives);
 			System.out.println("TrueNegatives: " + metric.TrueNegatives);
 			System.out.println("FalsePositives: " + metric.FalsePositives);
@@ -244,5 +169,23 @@ public class ExperimentBase {
 			System.out.println("Accuracy: " + metric.getAccuracy());
 		}
 		System.out.println("-----------------------------------------------");
+	}
+	
+	public boolean isDataRowPositiveTrainingSample(int[] rowData, int targetDigit){
+		if(rowData[rowData.length-1] == targetDigit) {
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	public boolean isDataRowNegativeTrainingSample(int[] rowData, PerceptronTrainer perceptron){
+		if(rowData[rowData.length-1] == (Integer)perceptron.getDynamicData(DYNAMIC_PROPERTY_DIGIT)) {
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
 }
