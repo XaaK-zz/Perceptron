@@ -7,7 +7,7 @@ public class ExperimentThree extends ExperimentBase {
 
 	List<PerceptronTrainer> trainerList;
 	
-	public void execute(String trainingDataPath, String testingDataPath, int digit) {
+	public void execute(String trainingDataPath, String testingDataPath, int digit, boolean logging) {
 		//create trainers 
 		trainerList = this.getPerceptronTrainers(10, 64, 0.2f);
 		
@@ -15,8 +15,12 @@ public class ExperimentThree extends ExperimentBase {
 		List<String> fileData = this.getFileContents(trainingDataPath);
 		
 		//train on the data
-		//	NOTE: We are forcing the min epoch to 10 to overtrain the perceptrons
-		this.train(trainerList,fileData,digit,0,2);
+		//	NOTE: We are forcing the max epoch to about 3/4 of the epoch's trained in experiment 1
+		//		in order to undertrain  the perceptrons
+		//this.train(trainerList,fileData,digit,0,2);
+		this.train(trainerList,fileData,digit,
+				new int[] {0,0,0,0,0,0,0,0,0,0},
+				new int[] {2,3,1,1,1,7,2,3,3,10});
 		
 		//show results of the testing data
 		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, fileData, digit);

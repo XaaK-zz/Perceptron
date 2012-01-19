@@ -1,6 +1,5 @@
 package net.greenvoss;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -94,11 +93,12 @@ public class PerceptronTrainer {
 	 */
 	public void trainOnDataRow(int[] data, int targetClass) {
 		///if the target does not equal the output we need to train
-		if(!this.evaluateOnDataRow(data, targetClass)) {
+		EvaluateResult result = this.evaluateOnDataRow(data, targetClass);
+		if(!result.result) {
 			for(int x=0;x<=data.length;x++){
 				//Apply perceptron gradient decent learning rule:
 				//	LearningRate * x_i * (t^k - o^k) 
-				this.perceptron.updateWeightValue(x, this.learningRate * (x==0 ? 1 : data[x-1]) * (targetClass - this.perceptron.threshold()));
+				this.perceptron.updateWeightValue(x, this.learningRate * (x==0 ? 1 : data[x-1]) * (targetClass - result.rawOutput));
 			}
 		}
 	}
@@ -108,9 +108,10 @@ public class PerceptronTrainer {
 	 * 	matches the passed targetClass and false otherwise
 	 * @param data Array of data to use to test the perceptron
 	 * @param targetClass Value that should be outout by the threshold function
-	 * @return Boolean flag indicating if the threshold found the correct class.
+	 * @return EvaluateResult This returns a EvaluateResult object becuase we need both the the 
+	 * 		result from the evaluation (true/false) as well as the raw output from the threshold
 	 */
-	public boolean evaluateOnDataRow(int[] data, int targetClass) {
+	public EvaluateResult evaluateOnDataRow(int[] data, int targetClass) {
 		//first send the data into the perceptron
 		for(int x=0;x<data.length;x++){
 			this.perceptron.setInput(x+1, data[x]);
@@ -119,10 +120,23 @@ public class PerceptronTrainer {
 		int output = this.perceptron.threshold();
 		//check if the target does not equal the output 
 		if(targetClass != output) {
-			return false;
+			return new EvaluateResult(false,output);
 		}
 		else {
-			return true;
+			return new EvaluateResult(true,output);
+		}
+	}
+	
+	/**
+	 * Container class to hold both the evaluation result and threshold output
+	 */
+	public class EvaluateResult {
+		public boolean result;
+		public int rawOutput;
+		
+		public EvaluateResult(boolean r, int output) {
+			result = r;
+			rawOutput = output;
 		}
 	}
 	
@@ -136,7 +150,7 @@ public class PerceptronTrainer {
 		for(String fileRow : fileData) {
 			int[] rowData = experiment.getRowContents(fileRow);
 			if(experiment.isDataRowPositiveTrainingSample(rowData, targetDigit)) {
-				if(this.evaluateOnDataRow(rowData, 1)) {
+				if(this.evaluateOnDataRow(rowData, 1).result) {
 					metric.TruePositives++;
 				}
 				else{
@@ -144,7 +158,7 @@ public class PerceptronTrainer {
 				}
 			}
 			else if(experiment.isDataRowNegativeTrainingSample(rowData, this)) {
-				if(this.evaluateOnDataRow(rowData, -1)){
+				if(this.evaluateOnDataRow(rowData, -1).result){
 					metric.TrueNegatives++;
 				}
 				else{

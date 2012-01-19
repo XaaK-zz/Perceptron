@@ -59,7 +59,7 @@ public class PerceptronTest {
 		//set weights to .5,-1,1
 		//	this should cause the threshold to be -1
 		
-		Assert.assertTrue("value for 1,0",simple.evaluateOnDataRow(new int[] {1,0},-1));
+		Assert.assertTrue("value for 1,0",simple.evaluateOnDataRow(new int[] {1,0},-1).result);
 	
 	}
 	
@@ -191,12 +191,12 @@ public class PerceptronTest {
 	public void shouldReturnValidMetrics(){
 		PerceptronTrainer trainer = new PerceptronTrainer(){
 			@Override
-			public boolean evaluateOnDataRow(int[] data, int targetClass) {
+			public EvaluateResult evaluateOnDataRow(int[] data, int targetClass) {
 				if(data[2] == 1){
-					return true;
+					return new EvaluateResult(true,0);
 				}
 				else {
-					return false;
+					return new EvaluateResult(false,0);
 				}
 					
 			}

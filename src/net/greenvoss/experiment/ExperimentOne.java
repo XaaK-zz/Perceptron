@@ -7,7 +7,7 @@ public class ExperimentOne extends ExperimentBase {
 
 	List<PerceptronTrainer> trainerList;
 	
-	public void execute(String trainingDataPath, String testingDataPath, int digit) {
+	public void execute(String trainingDataPath, String testingDataPath, int digit, boolean logging) {
 		//create trainers 
 		trainerList = this.getPerceptronTrainers(10, 64, 0.2f);
 		
@@ -15,7 +15,11 @@ public class ExperimentOne extends ExperimentBase {
 		List<String> fileData = this.getFileContents(trainingDataPath);
 		
 		//train on the data
-		this.train(trainerList,fileData,digit,0,1000);
+		//this.train(trainerList,fileData,digit,0,1000);
+		this.train(trainerList,fileData,digit,
+				new int[] {0,0,0,0,0,0,0,0,0,0},
+				new int[] {1000,1000,1000,1000,1000,1000,1000,1000,1000,1000});
+		
 		//show results of the testing data
 		List<ExperimentMetrics> metrics = this.calculateMetrics(trainerList, fileData, digit);
 		this.ReportResults(trainerList, metrics,"Experiment One metrics on training data:");

@@ -16,7 +16,7 @@ import org.apache.commons.io.FileUtils;
  */
 public class ExperimentBase {
 	
-	final static double TRAINING_CONSTANT = 0.1;
+	final static double TRAINING_CONSTANT = 0.01;
 	public final static String DYNAMIC_PROPERTY_DIGIT = "DigitTarget";
 	
 	/**
@@ -24,8 +24,9 @@ public class ExperimentBase {
 	 * @param trainingDataPath Path to the training data file
 	 * @param testingDataPath Path to the testing data file
 	 * @param digit Digit to use in the experiment
+	 * @param logging Flag to turn on logging to the console
 	 */
-	public void execute(String trainingDataPath, String testingDataPath, int digit) {
+	public void execute(String trainingDataPath, String testingDataPath, int digit, boolean logging) {
 		return;
 	}
 	
@@ -117,10 +118,12 @@ public class ExperimentBase {
 	 * @return Number of epochs trained
 	 */
 	void train(List<PerceptronTrainer> trainerList, List<String> fileData, 
-			int targetDigit, int minEpochs, int maxEpochs){
+			int targetDigit, int[] minEpochsList, int[] maxEpochsList){
 		
-		for(PerceptronTrainer trainer : trainerList){
-			trainer.train(this, fileData, targetDigit, minEpochs, maxEpochs);
+		//for(PerceptronTrainer trainer : trainerList){
+		for(int x=0;x<trainerList.size();x++) {
+			PerceptronTrainer trainer = trainerList.get(x);
+			trainer.train(this, fileData, targetDigit, minEpochsList[x], maxEpochsList[x]);
 		}
 	}
 

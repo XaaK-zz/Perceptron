@@ -72,9 +72,15 @@ public class ExperimentTest {
 	public void shouldCalculateAccuracyCorrectly(){
 		List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
 		//first create list of trainers that will return the data we want
-		list.add(new PerceptronTrainerMock());
-		list.add(new PerceptronTrainerMock());
-		list.add(new PerceptronTrainerMock());
+		PerceptronTrainer trainer = new PerceptronTrainerMock();
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 0);
+		list.add(trainer);
+		trainer = new PerceptronTrainerMock();
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 1);
+		list.add(trainer);
+		trainer = new PerceptronTrainerMock();
+		trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_DIGIT, 2);
+		list.add(trainer);
 		
 		//now construct list of data to get accuracy measurements on
 		//	This list combined with the mock Perceptron trainer makes this test work
@@ -142,7 +148,11 @@ public class ExperimentTest {
 		fileData.add("0,2,2");
 		
 		//train data
-		experimentOne.train(list, fileData, 0,0,1000);
+		//experimentOne.train(list, fileData, 0,0,1000);
+		experimentOne.train(list,fileData,0,
+				new int[] {0,0,0},
+				new int[] {1000,1000,1000});
+		
 		
 		//ensure the weights have been modified
 		Assert.assertTrue("Invalid weight.",list.get(1).getWeightValue(0) != .5f);
@@ -192,13 +202,15 @@ public class ExperimentTest {
 				
 				//Examine metrics and decide if we have trained correctly
 				Assert.assertTrue("Invalid accuracy for digit 1. - " + metrics.get(1).getAccuracy(),
-						metrics.get(1).getAccuracy() >= 50.0);
+						metrics.get(1).getAccuracy() >= 90.0);
+				Assert.assertTrue("Invalid accuracy for digit 2. - " + metrics.get(2).getAccuracy(),
+						metrics.get(1).getAccuracy() >= 90.0);
 				return;
 			}
 		};
 		
 		//execute the experiment
-		experimentOne.execute("", "", 0);
+		experimentOne.execute("", "", 0,false);
 		
 	}
 	
@@ -211,13 +223,13 @@ public class ExperimentTest {
 	@Test
 	public void testShouldNotKeepTraining_Converged(){
 		ExperimentBase o = new ExperimentBase();
-		Assert.assertFalse(o.shouldKeepTraining(1, 0, 1000, 75, 75.1));
+		Assert.assertFalse(o.shouldKeepTraining(1, 0, 1000, 75, 75 + (ExperimentBase.TRAINING_CONSTANT/2)));
 	}
 	
 	@Test
 	public void testShouldNotKeepTraining_MaxEpochs(){
 		ExperimentBase o = new ExperimentBase();
-		Assert.assertFalse(o.shouldKeepTraining(10, 0, 10, 65, 75.1));
+		Assert.assertFalse(o.shouldKeepTraining(10, 0, 10, 65, 75 + ExperimentBase.TRAINING_CONSTANT));
 	}
 	
 	@Test
@@ -231,13 +243,13 @@ public class ExperimentTest {
 	 */
 	class PerceptronTrainerMock extends PerceptronTrainer {
 		@Override
-		public boolean evaluateOnDataRow(int[] data, int targetClass) {
+		public EvaluateResult evaluateOnDataRow(int[] data, int targetClass) {
 			//Return true if the first data element matches the target class
 			if(data[0] == targetClass){
-				return true;
+				return new EvaluateResult(true,0);
 			}
 			else{
-				return false;
+				return new EvaluateResult(false,0);
 			}
 		}
 	}
