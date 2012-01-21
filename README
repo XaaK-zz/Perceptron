@@ -1,0 +1,7 @@
+Perceptron Learning Algorithm Code
+
+This code implements a single-layer Perceptron neural network, and runs the network against a series of five experiments.  The Perceptron code is designed to be as generic as possible so it could be re-used outside the specific experiments defined.
+
+This code was developed for the CS 545 - Machine Learning class at Portland State University in the Winter 2012 term.
+
+All code is copyright Zach Greenvoss and is licensed under the MIT license.

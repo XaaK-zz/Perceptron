@@ -1,4 +1,4 @@
-<project name="Perceptron" default="compile" basedir=".">
+<project name="Perceptron" default="package" basedir=".">
 	<description>
 	    Build file for Perceptron 
 	</description>
@@ -7,34 +7,62 @@
 	<property name="test"    location="test"/>
 	<property name="build"   location="build"/>
 	<property name="lib.dir" location="lib"/>
-
+	<property name="test.dir" location="test"/>
+	
  	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar"/>
  	</path>
   
+	<path id="classpath.test">
+	    <pathelement location="${lib.dir}/junit.jar" />
+		<pathelement location="${lib.dir}/commons-io-2.1.jar" />
+		<pathelement location="${lib.dir}/org.hamcrest.core.jar" />
+	    <pathelement location="${build}" />
+	</path>
+	
 	<target name="init">
    		<!-- Create the build directory structure used by compile -->
     	<mkdir dir="${build}"/>
-  	</target>
-
-  <target name="compile" 
-        description="compile the source " depends="init">
-  		<copy todir="${build}/lib">
+		<copy todir="${build}/lib">
   			<fileset dir="${lib.dir}" includes="**/*.jar"/>
   		</copy>
+  	</target>
+	
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+		
+  	<target name="compile" 
+        description="compile the source " depends="init">
+  		
     	<!-- Compile the java code from ${src} into ${build} -->
     	<javac srcdir="${src}" destdir="${build}" classpathref="classpath"/>
+  </target>
   	
-  		<jar jarfile="./Perceptron.jar" basedir="${build}">
-  	    	<manifest>
-  	    	    <attribute name="Main-Class"
-  	    	            value="net.greenvoss.PerceptronDriver"/>
-  	    		<attribute name="Class-Path"
-  	    		  	   	value="lib/commons-io-2.1.jar"/>
-  	    	</manifest>
-  	    </jar>
+  <target name = "package" depends="compile">
+	<jar jarfile="./Perceptron.jar" basedir="${build}">
+    	<manifest>
+    	    <attribute name="Main-Class"
+    	            value="net.greenvoss.PerceptronDriver"/>
+    		<attribute name="Class-Path"
+    		  	   	value="lib/commons-io-2.1.jar"/>
+    	</manifest>
+    </jar>
   	
   	<delete dir="${build}"/>
   </target>
 
+	<target name="test" depends="init">
+		<!-- Compile the java code from ${src} into ${build} -->
+		<javac srcdir="${src}" destdir="${build}" debug="true" classpathref="classpath.test"/>
+		<javac srcdir="${test.dir}" destdir="${build}" debug="true" classpathref="classpath.test"/>
+		
+		<junit haltonfailure="yes">
+		    <formatter type="plain" usefile="false" />
+		    <classpath refid="classpath.test" />
+			<batchtest>
+		    	<fileset dir="${build}" includes="**/*Test.class" />
+		    </batchtest>
+		</junit>
+	</target>
 </project>

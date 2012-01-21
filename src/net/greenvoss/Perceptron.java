@@ -7,9 +7,20 @@ import java.text.NumberFormat;
  *
  */
 public class Perceptron {
+	/**
+	 * Input data 
+	 */
 	int[] inputNodes;
+	
+	/**
+	 * Weight for each input node
+	 */
 	float[] weights;
 	
+	/**
+	 * Constructor for the Perceptron class.
+	 * @param numberofInputs Number of inputs accepted (excluding the bias node) 
+	 */
 	Perceptron(int numberofInputs) {
 		//adjust for bias node
 		inputNodes = new int[++numberofInputs];

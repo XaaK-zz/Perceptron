@@ -7,11 +7,31 @@ import java.util.Random;
 import net.greenvoss.experiment.ExperimentBase;
 import net.greenvoss.experiment.ExperimentMetrics;
 
+/**
+ * Class that is responsible for training a Perceptron
+ */
 public class PerceptronTrainer {
 	
+	/**
+	 * Perceptron this trainer owns and will update based on training data
+	 */
 	Perceptron perceptron;
+	
+	/**
+	 * Learning rate for the training algorithm
+	 */
 	float learningRate;
+	
+	/**
+	 * Data map used to store experiment-specific information
+	 * 	This was added in order to keep the Perceptron/PerceptronTrainer code 
+	 * 	free of any code that was specific to the digit experiments 
+	 */
 	HashMap<String,Object> dynamicData = new HashMap<String,Object>();
+	
+	/**
+	 * Number of epochs this Perceptron was trained
+	 */
 	int epochsTrained = 0;
 	
 	/**
@@ -56,8 +76,8 @@ public class PerceptronTrainer {
 	
 	/**
 	 * Gets dynamic data from this object
-	 * @param name Name value to use to retrieve the value from the hash
-	 * @return Object retrieved from the hash
+	 * @param name Name value to use to retrieve the value from the dynamic data
+	 * @return Object retrieved from the dynamic data
 	 */
 	public Object getDynamicData(String name){
 		return this.dynamicData.get(name);
@@ -98,7 +118,9 @@ public class PerceptronTrainer {
 			for(int x=0;x<=data.length;x++){
 				//Apply perceptron gradient decent learning rule:
 				//	LearningRate * x_i * (t^k - o^k) 
-				this.perceptron.updateWeightValue(x, this.learningRate * (x==0 ? 1 : data[x-1]) * (targetClass - result.rawOutput));
+				//	Note: the x vs x-1 is just adjusting for the bias node
+				this.perceptron.updateWeightValue(x, this.learningRate * 
+						(x==0 ? 1 : data[x-1]) * (targetClass - result.rawOutput));
 			}
 		}
 	}
@@ -128,28 +150,31 @@ public class PerceptronTrainer {
 	}
 	
 	/**
-	 * Container class to hold both the evaluation result and threshold output
+	 * Returns the weight value for a node on the contained Perceptron object
+	 * @param node Node to return the weight value for
+	 * @return Weight value of the requested node
 	 */
-	public class EvaluateResult {
-		public boolean result;
-		public int rawOutput;
-		
-		public EvaluateResult(boolean r, int output) {
-			result = r;
-			rawOutput = output;
-		}
-	}
-	
 	public float getWeightValue(int node){
 		return this.perceptron.getWeightValue(node);
 	}
 	
-	public ExperimentMetrics calculateMetrics(List<String> fileData, int targetDigit, ExperimentBase experiment) {
+	/**
+	 * Generates the Confusion Matrix for the current perceptron, 
+	 * 	given a set of data and an Experiment
+	 * @param fileData Data to evaluate against the Perceptron network
+	 * @param experiment Experiment object containing the specific business logic needed
+	 * 		for evaluating if a row is a valid sample or not
+	 * @return ExperimentMetrics object containing the results of the current Perceptron network
+	 * 		against the fileData
+	 */
+	public ExperimentMetrics calculateMetrics(List<String> fileData, ExperimentBase experiment) {
 		ExperimentMetrics metric = new ExperimentMetrics();
 		//calculate accuracy on the Perceptron with the passed in data
 		for(String fileRow : fileData) {
 			int[] rowData = experiment.getRowContents(fileRow);
-			if(experiment.isDataRowPositiveTrainingSample(rowData, targetDigit)) {
+			//Note: Experiment tells us is this is a Positive/Negative training example
+			//	This the Perceptron code doesn't need to know anything about the data
+			if(experiment.isDataRowPositiveTrainingSample(rowData, this)) {
 				if(this.evaluateOnDataRow(rowData, 1).result) {
 					metric.TruePositives++;
 				}
@@ -170,32 +195,39 @@ public class PerceptronTrainer {
 		return metric;
 	}
 	
-	public int train(ExperimentBase experiment, List<String> fileData, int targetDigit, 
+	/**
+	 * Train on the provided data until the accuracy stops improving.
+	 * This will update the Perceptron weights according to the gradient descent learning rule 
+	 * @param experiment Experiment object detailing the business rules for the data
+	 * @param fileData The rows of data to train against
+	 * @param minEpochs Minimum number of training runs
+	 * @param maxEpochs Maximum number of training runs
+	 * @return Number of epochs trained on the data before convergence is found
+	 */
+	public int train(ExperimentBase experiment, List<String> fileData,  
 			int minEpochs, int maxEpochs){
 		double lastAccuracy = 0.0;
 		double currentAccuracy = 100.0;
 		
 		//get the current accuracy count
-		//currentAccuracy = getAccuracy(trainerList, fileData, targetDigit);
-		ExperimentMetrics metrics = this.calculateMetrics(fileData,targetDigit,experiment);
+		ExperimentMetrics metrics = this.calculateMetrics(fileData,experiment);
 		currentAccuracy = metrics.getAccuracy();
 		
-		//keep looping until we stablize or have run for 1000 times
+		//keep looping until we stablize or have run for maxEpochs times
+		//	Note: the experiment determines the exact business logic
 		while(experiment.shouldKeepTraining(epochsTrained, minEpochs, maxEpochs, lastAccuracy, currentAccuracy)) {
 			lastAccuracy = currentAccuracy;
 			for(String fileRow : fileData) {
 				int[] rowData = experiment.getRowContents(fileRow);
-				if(experiment.isDataRowPositiveTrainingSample(rowData, targetDigit)) {
-					//Positive example (i.e. same digit)
+				if(experiment.isDataRowPositiveTrainingSample(rowData, this)) {
 					this.trainOnDataRow(rowData, 1);
 				}
 				else if(experiment.isDataRowNegativeTrainingSample(rowData, this)) {
-					//Negative example (i.e. some other digit)
 					this.trainOnDataRow(rowData, -1);
 				}
 			}
 			//calculate the metrics for this run
-			metrics = this.calculateMetrics(fileData,targetDigit,experiment);
+			metrics = this.calculateMetrics(fileData,experiment);
 			currentAccuracy = metrics.getAccuracy();
 			
 			//update the epoch counter
@@ -205,4 +237,28 @@ public class PerceptronTrainer {
 		return epochsTrained;
 	}
 	
+	/**
+	 * Container class to hold both the evaluation result and threshold output
+	 */
+	public class EvaluateResult {
+		/**
+		 * Result of the threshold function
+		 */
+		public boolean result;
+		
+		/*
+		 * Raw output of the summation of the node - useful to keep for training
+		 */
+		public int rawOutput;
+		
+		/**
+		 * Constructor for an EvaluateResult object
+		 * @param r Result of the threshold call
+		 * @param output Raw output of the summation
+		 */
+		public EvaluateResult(boolean r, int output) {
+			result = r;
+			rawOutput = output;
+		}
+	}
 }

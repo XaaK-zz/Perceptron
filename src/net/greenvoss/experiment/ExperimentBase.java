@@ -16,8 +16,20 @@ import org.apache.commons.io.FileUtils;
  */
 public class ExperimentBase {
 	
+	/**
+	 * Value used when determining if the training has converged
+	 */
 	final static double TRAINING_CONSTANT = 0.01;
+	
+	/**
+	 * Name used to lookup in the dynamic map for the target digit
+	 */
 	public final static String DYNAMIC_PROPERTY_DIGIT = "DigitTarget";
+	
+	/**
+	 * Name used to lookup in the dynamic map for the source digit
+	 */
+	public final static String DYNAMIC_PROPERTY_SOURCEDIGIT = "SourceTarget";
 	
 	/**
 	 * Common method used to execute the derived experiments
@@ -74,15 +86,19 @@ public class ExperimentBase {
 	 * @param numberOfTrainers Number of trainers to construct
 	 * @param inputSize Size of the underlying perceptron input layer 
 	 * @param learningRate Learning rate of the training algorithm
+	 * @param targetDigit Digit all the perceptronsTrainers will use as the source digit
 	 * @return List of PerceptronTrainers - initialized with the passed in data and 
 	 * 		set to random weights
 	 */
-	List<PerceptronTrainer> getPerceptronTrainers(int numberOfTrainers, int inputSize, float learningRate) {
+	List<PerceptronTrainer> getPerceptronTrainers(int numberOfTrainers, int inputSize, 
+			float learningRate, int targetDigit) {
 		List<PerceptronTrainer> list = new ArrayList<PerceptronTrainer>();
 		for(int x=0;x<numberOfTrainers;x++){
 			PerceptronTrainer trainer = getTrainer();
 			trainer.init(inputSize, learningRate);
+			//set experiment specific dynamic data
 			trainer.setDynamicData(DYNAMIC_PROPERTY_DIGIT, (Integer)x);
+			trainer.setDynamicData(ExperimentBase.DYNAMIC_PROPERTY_SOURCEDIGIT, targetDigit);
 			list.add(trainer);
 		}
 		return list;
@@ -92,15 +108,14 @@ public class ExperimentBase {
 	 * Calculates the confusion matrix data and accuracy for a given set of trainers and input data
 	 * @param trainerList List of PerceptronTrainers to test
 	 * @param fileData List of test data in CSV format, with the target digit as the last value
-	 * @param targetDigit Target digit we are testing on
 	 * @return List of ExperimentMetrics objects, containing the detailed results of the trainers 
 	 * 		against the fileData data rows.
 	 */
-	List<ExperimentMetrics> calculateMetrics(List<PerceptronTrainer> trainerList, List<String> fileData, int targetDigit) {
+	List<ExperimentMetrics> calculateMetrics(List<PerceptronTrainer> trainerList, List<String> fileData) {
 		List<ExperimentMetrics> metrics = new ArrayList<ExperimentMetrics>();
 		//calculate accuracy on the sets
 		for(PerceptronTrainer trainer : trainerList){
-			ExperimentMetrics metric = trainer.calculateMetrics(fileData, targetDigit, this);
+			ExperimentMetrics metric = trainer.calculateMetrics(fileData, this);
 			metrics.add(metric);
 		}
 		
@@ -113,22 +128,26 @@ public class ExperimentBase {
 	 * @param trainerList List of PerceptronTrainer objects to train against the data
 	 * @param fileData List of String objects containing the CSV data from the training data - 
 	 * 		this must have the target digit as the last element in each row
-	 * @param targetDigit Digit we are testing against
-	 * @param maxEpochs Max number of times we will run the training data
-	 * @return Number of epochs trained
+	 * @param minEpochsList List of minimum epoch values - 1 for each trainer
+	 * @param maxEpochsList List of maximum epoch values - 1 for each trainer
 	 */
 	void train(List<PerceptronTrainer> trainerList, List<String> fileData, 
-			int targetDigit, int[] minEpochsList, int[] maxEpochsList){
+			int[] minEpochsList, int[] maxEpochsList){
 		
-		//for(PerceptronTrainer trainer : trainerList){
 		for(int x=0;x<trainerList.size();x++) {
 			PerceptronTrainer trainer = trainerList.get(x);
-			trainer.train(this, fileData, targetDigit, minEpochsList[x], maxEpochsList[x]);
+			trainer.train(this, fileData, minEpochsList[x], maxEpochsList[x]);
 		}
 	}
 
 	/**
-	 * Extracted logic to determine if the training epochs should continue or not
+	 * Experiment-specific logic to determine if the training should continue
+	 * @param epochs Number of epochs that have been run already
+	 * @param minEpochs Minimum number of epochs defined for this training run
+	 * @param maxEpochs Maximum number of epochs defined for this training run
+	 * @param lastAccuracy The previous run's accuracy
+	 * @param currentAccuracy The current run's accuracy
+	 * @return A boolean flag indicating if we should keep training or not
 	 */
 	public boolean shouldKeepTraining(int epochs, int minEpochs, int maxEpochs,
 			double lastAccuracy, double currentAccuracy){
@@ -155,8 +174,7 @@ public class ExperimentBase {
 	 * 	Can also be overridden in the unit tests to check for the final results of a test
 	 * @param trainerList Final list of PerceptronTrainers after an experiment is complete
 	 * @param metrics Final list of metrics, calculated on the training data
-	 * @param epochs Number of training runs executed
-	 * @param epochs String to print before the results
+	 * @param header String value to output on the console - used to format display 
 	 */
 	void ReportResults(List<PerceptronTrainer> trainerList, List<ExperimentMetrics> metrics, 
 			String header){
@@ -174,8 +192,16 @@ public class ExperimentBase {
 		System.out.println("-----------------------------------------------");
 	}
 	
-	public boolean isDataRowPositiveTrainingSample(int[] rowData, int targetDigit){
-		if(rowData[rowData.length-1] == targetDigit) {
+	/**
+	 * Experiment specific logic to determine if the data row is a positive training sample
+	 * 		For the handwriting task the last element in the row is the digit, but this might not be 
+	 * 		true for all Perceptron training tasks 
+	 * @param rowData file data - provided as an array of integers
+	 * @param trainer PerceptronTrainer defined for this task
+	 * @return Boolean flag indicating if this row is a positive training sample
+	 */
+	public boolean isDataRowPositiveTrainingSample(int[] rowData, PerceptronTrainer trainer){
+		if(rowData[rowData.length-1] == (Integer)trainer.getDynamicData(DYNAMIC_PROPERTY_SOURCEDIGIT)) {
 			return true;
 		}
 		else{
@@ -183,6 +209,12 @@ public class ExperimentBase {
 		}
 	}
 	
+	/**
+	 * Experiment specific logic to determine if the data row is a negative training sample
+	 * @param rowData file data - provided as an array of integers
+	 * @param perceptron PerceptronTrainer defined for this task
+	 * @return Boolean flag indicating if this row is a negative training sample
+	 */
 	public boolean isDataRowNegativeTrainingSample(int[] rowData, PerceptronTrainer perceptron){
 		if(rowData[rowData.length-1] == (Integer)perceptron.getDynamicData(DYNAMIC_PROPERTY_DIGIT)) {
 			return true;

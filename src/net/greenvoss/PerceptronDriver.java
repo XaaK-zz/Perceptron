@@ -5,6 +5,10 @@ import java.util.List;
 import net.greenvoss.experiment.ExperimentBase;
 import net.greenvoss.experiment.ExperimentFactory;
 
+/**
+ * Main entry-point for the application.
+ * 	Contains the main method and handles command-line arguments
+ */
 public class PerceptronDriver {
 
 	static void usage() {
@@ -32,7 +36,9 @@ public class PerceptronDriver {
 				verboseMode = true;
 			}
 		}
+		//get the list of experiments
 		List<ExperimentBase> list = ExperimentFactory.getExperiments();
+		//iterate over them and execute the experiment
 		for(ExperimentBase experiment : list){
 			experiment.execute(args[0], args[1], Integer.parseInt(args[2]),verboseMode);
 		}

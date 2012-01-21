@@ -96,7 +96,7 @@ public class PerceptronTest {
 			
 			@Override
 			public boolean isDataRowPositiveTrainingSample(int[] rowData,
-					int targetDigit) {
+					PerceptronTrainer perceptron) {
 				return false;
 			}
 		};
@@ -106,7 +106,7 @@ public class PerceptronTest {
 		//create trainer with example settings
 		List<String> fileData = new ArrayList<String>();
 		fileData.add("0,0");
-		trainer.train(experiment, fileData, -1, 0, 1000);
+		trainer.train(experiment, fileData, 0, 1000);
 		
 		//check that weights were updated correctly
 		Assert.assertEquals("Invalid weight for node 0",-.3f,trainer.perceptron.getWeightValue(0));
@@ -216,7 +216,7 @@ public class PerceptronTest {
 			
 			@Override
 			public boolean isDataRowPositiveTrainingSample(int[] rowData,
-					int targetDigit) {
+					PerceptronTrainer perceptron) {
 				if(rowData[0] == 1){
 					return true;
 				}
@@ -234,7 +234,7 @@ public class PerceptronTest {
 		fileData.add("1,0,1");	//successful positive training sample
 		fileData.add("1,0,1");	//successful positive training sample
 		
-		ExperimentMetrics metrics = trainer.calculateMetrics(fileData, 0, experiment);
+		ExperimentMetrics metrics = trainer.calculateMetrics(fileData, experiment);
 		
 		Assert.assertEquals("Invalid TruePositives", 3, metrics.TruePositives);
 		Assert.assertEquals("Invalid TrueNegatives", 1, metrics.TrueNegatives);

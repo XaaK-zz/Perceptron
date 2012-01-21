@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+	<property name="lib.dir" location="lib"/>
+		
+    <target name="javadoc">
+        <javadoc access="private" author="true" destdir="doc" doctitle="Greenvoss Perceptron Library" nodeprecated="true" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false" packagenames="net.greenvoss,net.greenvoss.experiment" source="1.6" sourcepath="src" splitindex="true" use="true" version="true">
+        	<classpath>
+        		<fileset dir="${lib.dir}">
+		            <include name="*.jar"/>
+		        </fileset>
+		    </classpath>
+        </javadoc>
+    </target>
+</project>
